@@ -6,7 +6,7 @@ Created on Jan 17, 2015
 from courier.app.CourierService import CourierService
 from courier.gui.GuiMain import GuiMain
 import sys
-from PyQt4 import QtGui
+from PyQt5.QtWidgets import QApplication
 import cmd
 
 
@@ -35,7 +35,7 @@ class CommandManager(cmd.Cmd):
 
 
 if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     service = CourierService()
     service.setDaemon(True)
     service.start()

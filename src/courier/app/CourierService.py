@@ -52,6 +52,7 @@ class CourierService(threading.Thread):
         # Initialize callback lists for 
         self.__callbacksOnNewMessageFromDevice = []
         self.__callbacksOnTokenFetched = []
+        self.__callbacksOnDeviceConnected = []
 
     def run(self):
         while(True):
@@ -76,8 +77,8 @@ class CourierService(threading.Thread):
             cnt -= 1
         if self.token == None:
             logger.error("Cannot connect to server")
-        else:
-            self.on
+        # else:
+        #     self.on
 
     def getTokenRequestPackage(self):
         return {"type": "operation", "command": "request_token"}
@@ -113,6 +114,8 @@ class CourierService(threading.Thread):
             self.onNewMessageFromDevice(msg)
         elif mtype == "token_response":
             self.onTokenResponse(msg)
+        elif mtype == "info_paired":
+            self.onDeviceConnected(msg)
 
     def onTokenResponse(self, message):
         logger.debug("Get token from server: " + message["token"])
@@ -120,6 +123,10 @@ class CourierService(threading.Thread):
 
     def onNewMessageFromDevice(self, message):
         for fn in self.__callbacksOnNewMessageFromDevice:
+            fn(message)
+
+    def onDeviceConnected(self, message):
+        for fn in self.__callbacksOnDeviceConnected:
             fn(message)
 
     def addOnNewMessageFromDevice(self, callback):
@@ -134,3 +141,8 @@ class CourierService(threading.Thread):
     def removeOnTokenFetched(self, callback):
         self.__callbacksOnTokenFetched.remove(callback)
 
+    def addOnDeviceConnected(self, callback):
+        self.__callbacksOnDeviceConnected.append(callback)
+
+    def removeOnDeviceConnected(self, callback):
+        self.__callbacksOnDeviceConnected.remove(callback)

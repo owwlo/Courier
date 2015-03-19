@@ -5,7 +5,10 @@ Created on Jan 19, 2015
 '''
 import logging
 import sys
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore
+from PyQt5.QtCore import QObject, QUrl, Qt
+from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
+from PyQt5.QtQml import QQmlApplicationEngine
 import coloredlogs
 
 logger = logging.getLogger("CourierAppGui")
@@ -22,17 +25,17 @@ class GuiMain(object):
 
         service.addOnNewMessageFromDevice(self.onNewMessage)
         service.addOnTokenFetched(self.onTokenFetched)
+        service.addOnDeviceConnected(self.onDeviceConnected)
 
     def setUpTrayIcon(self):
         # Prepare tray icon
-        self.__trayIcon = QtGui.QSystemTrayIcon(
+        self.__trayIcon = QSystemTrayIcon(
             QtGui.QIcon.fromTheme("edit-undo"), self.__app)
-        menu = QtGui.QMenu()
-        exitAction = QtGui.QAction("&Exit", menu)
+        menu = QMenu()
+        exitAction = QAction("&Exit", menu)
         menu.addAction(exitAction)
-        self.__app.connect(
-            exitAction, QtCore.SIGNAL("triggered()"), self.onMenuExit)
 
+        exitAction.triggered.connect(self.onMenuExit)
         self.__trayIcon.setContextMenu(menu)
 
     def onMenuExit(self):
@@ -52,3 +55,17 @@ class GuiMain(object):
 
     def onTokenFetched(self, token):
         logger.debug("New token fetched from server: " + str(token))
+        self.showQRCode(token)
+
+    def onDeviceConnected(self, message):
+        logger.debug("New Device Connected.")
+
+    def showQRCode(self, token):
+        engine = QQmlApplicationEngine()
+        ctx = engine.rootContext()
+        ctx.setContextProperty("main", engine)
+
+        engine.load('qrcode.qml')
+
+        win = engine.rootObjects()[0]
+        win.show()
