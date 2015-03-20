@@ -5,11 +5,13 @@ Created on Jan 19, 2015
 '''
 import logging
 import sys
-from PyQt5 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore, QtQml, QtQuick
 from PyQt5.QtCore import QObject, QUrl, Qt
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
 from PyQt5.QtQml import QQmlApplicationEngine
 import coloredlogs
+import threading
+import qrcode
 
 logger = logging.getLogger("CourierAppGui")
 coloredlogs.install(level = logging.DEBUG, show_hostname = False, show_timestamps = False)
@@ -26,6 +28,9 @@ class GuiMain(object):
         service.addOnNewMessageFromDevice(self.onNewMessage)
         service.addOnTokenFetched(self.onTokenFetched)
         service.addOnDeviceConnected(self.onDeviceConnected)
+
+        # For test purpose
+        self.testQRCode()
 
     def setUpTrayIcon(self):
         # Prepare tray icon
@@ -60,12 +65,26 @@ class GuiMain(object):
     def onDeviceConnected(self, message):
         logger.debug("New Device Connected.")
 
+    def testQRCode(self):
+        self.showQRCode("hfoiwejfpewokf")
+
     def showQRCode(self, token):
-        engine = QQmlApplicationEngine()
-        ctx = engine.rootContext()
-        ctx.setContextProperty("main", engine)
+        qmlRegisterType(Message, 'Message', 1, 0, 'Message')
 
-        engine.load('qrcode.qml')
+        qrImg = Message()
+        qrImg.img(qrcode.make(token))
+        window = QQmlApplicationEngine(QUrl('qrcode.qml'), self.__app)
+        window.rootContext().setContextProperty("qrImg", qrImg)
 
-        win = engine.rootObjects()[0]
-        win.show()
+class Message(QObject):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._img = ''
+
+    @pyqtProperty('QImage')
+    def img(self):
+        return self._img
+
+    @img.setter
+    def img(self, img):
+        self._img = img
