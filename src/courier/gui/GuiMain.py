@@ -6,12 +6,16 @@ Created on Jan 19, 2015
 import logging
 import sys
 from PyQt5 import QtGui, QtCore, QtQml, QtQuick
-from PyQt5.QtCore import QObject, QUrl, Qt
+from PyQt5.QtCore import QObject, QUrl, Qt, QVariant, QMetaObject, Q_ARG
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
 from PyQt5.QtQml import QQmlApplicationEngine
 import coloredlogs
 import threading
 import qrcode
+import base64
+from StringIO import StringIO
+# For PNG support
+# from qrcode.image.pure import PymagingImage
 
 logger = logging.getLogger("CourierAppGui")
 coloredlogs.install(level = logging.DEBUG, show_hostname = False, show_timestamps = False)
@@ -66,25 +70,24 @@ class GuiMain(object):
         logger.debug("New Device Connected.")
 
     def testQRCode(self):
-        self.showQRCode("hfoiwejfpewokf")
+        self.showQRCode("test purpose fake token string")
 
     def showQRCode(self, token):
-        qmlRegisterType(Message, 'Message', 1, 0, 'Message')
+        # Build QRCode image
+        imageBuffer = StringIO()
+        qr = qrcode.QRCode(
+            box_size=20,
+            border=1,
+        )
+        qr.add_data(token)
+        qr.make_image().save(imageBuffer)
 
-        qrImg = Message()
-        qrImg.img(qrcode.make(token))
+        # Encode into Base64
+        encodedQrImg = base64.b64encode(imageBuffer.getvalue())
+
+        # Load QML
         window = QQmlApplicationEngine(QUrl('qrcode.qml'), self.__app)
-        window.rootContext().setContextProperty("qrImg", qrImg)
 
-class Message(QObject):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._img = ''
-
-    @pyqtProperty('QImage')
-    def img(self):
-        return self._img
-
-    @img.setter
-    def img(self, img):
-        self._img = img
+        # Call functions to update content
+        qmlRoot = window.rootObjects()[0]
+        QMetaObject.invokeMethod(qmlRoot, "setQrCodeImage", Qt.AutoConnection, Q_ARG("QVariant", QVariant(encodedQrImg)))

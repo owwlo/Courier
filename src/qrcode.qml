@@ -2,6 +2,7 @@ import QtQuick 2.2
 import QtQuick.Controls 1.1
 
 ApplicationWindow {
+    id: applicationWindow1
     color: "transparent"
     title: "QR Code"
     visible: true
@@ -35,6 +36,10 @@ ApplicationWindow {
 
     Column {
         id: column1
+        anchors.rightMargin: 0
+        anchors.bottomMargin: 0
+        anchors.leftMargin: 0
+        anchors.topMargin: 0
         clip: false
         anchors.fill: parent
 
@@ -56,15 +61,40 @@ ApplicationWindow {
             Text {
                 id: text1
                 y: 0
-                text: qsTr("Title")
+                text: qsTr("Scan with Courier")
+                font.family: "Tahoma"
+                horizontalAlignment: Text.AlignHCenter
                 anchors.right: parent.right
                 anchors.rightMargin: 0
                 anchors.left: parent.left
                 anchors.leftMargin: 0
                 anchors.verticalCenter: parent.verticalCenter
-                font.pixelSize: 12
+                font.pixelSize: 16
+            }
+        }
+
+        Row {
+            id: contentRow
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 18
+            anchors.top: titleBarRow.bottom
+            anchors.topMargin: 0
+            anchors.right: parent.right
+            anchors.rightMargin: 16
+            anchors.left: parent.left
+            anchors.leftMargin: 16
+
+            Image {
+                id: qrImage
+                fillMode: Image.PreserveAspectFit
+                anchors.fill: parent
+                source: "qrc:/qtquickplugin/images/template_image.png"
             }
         }
     }
 
+    function setQrCodeImage(imgData) {
+        qrImage.source = "data:image/png;base64," + imgData
+        return
+    }
 }
