@@ -20,11 +20,23 @@ from StringIO import StringIO
 logger = logging.getLogger("CourierAppGui")
 coloredlogs.install(level = logging.DEBUG, show_hostname = False, show_timestamps = False)
 
+class NotificationMan():
+    def __init__(self, service, app, guiMain):
+        self.__service = service
+        self.__app = app
+        self.__guiMain = guiMain
+
+        self.aliveNotificationCount = 0
+
+    def addNewNotification(self, message):
+        pass
+
 class GuiMain(object):
 
     def __init__(self, service, app):
         self.__service = service
         self.__app = app
+        self.__notificationMan = NotificationMan(service, app, self)
 
         self.setUpTrayIcon()
         self.setTrayVisiable(True)
