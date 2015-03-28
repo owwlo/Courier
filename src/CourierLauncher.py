@@ -30,6 +30,9 @@ class CommandManager(cmd.Cmd):
     def do_exit(self, line):
         sys.exit()
 
+    def do_new_notification(self, line):
+        self.__gui.getNotificationMan().addNewNotification(None)
+
     def emptyline(self):
         pass
 

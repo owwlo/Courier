@@ -3,22 +3,28 @@ Created on Jan 19, 2015
 
 @author: owwlo
 '''
+from PyQt5              import QtGui, QtCore, QtQml, QtQuick
+from PyQt5.QtCore       import QObject, QUrl, Qt, QVariant, QMetaObject, Q_ARG
+from PyQt5.QtWidgets    import QApplication, QSystemTrayIcon, QMenu, QAction
+from PyQt5.QtQml        import QQmlApplicationEngine
+from StringIO           import StringIO
+from collections        import deque
 import logging
 import sys
-from PyQt5 import QtGui, QtCore, QtQml, QtQuick
-from PyQt5.QtCore import QObject, QUrl, Qt, QVariant, QMetaObject, Q_ARG
-from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
-from PyQt5.QtQml import QQmlApplicationEngine
 import coloredlogs
 import threading
 import qrcode
 import base64
-from StringIO import StringIO
+import math
+
 # For PNG support
 # from qrcode.image.pure import PymagingImage
 
 logger = logging.getLogger("CourierAppGui")
 coloredlogs.install(level = logging.DEBUG, show_hostname = False, show_timestamps = False)
+
+NOTIFICATION_WINDOW_HEIGHT = 190
+NOTIFICATION_WINDOW_WIDTH = 480
 
 class NotificationMan():
     def __init__(self, service, app, guiMain):
@@ -28,8 +34,63 @@ class NotificationMan():
 
         self.aliveNotificationCount = 0
 
+        # TODO: Find a better way to get the proper screen number.
+        screenId = app.desktop().screenNumber(app.desktop().cursor().pos())
+        screenRes = app.desktop().screenGeometry(screenId)
+
+        self.__notificationEndX = screenRes.x() + screenRes.width()
+        self.__notificationStartX = self.__notificationEndX - NOTIFICATION_WINDOW_WIDTH
+        self.__notificationStartY = screenRes.y()
+        self.__notificationEndY = screenRes.y() + screenRes.height()
+        self.__maxNotificationWindowCount = int(math.floor(screenRes.height() / NOTIFICATION_WINDOW_HEIGHT))
+
+        self.__notificationWindowMask = [False] * self.__maxNotificationWindowCount
+
+        self.__notificationWaitingQueue = deque()
+
+    def on_qml_reply(self, replyText):
+        print replyText    
+
+    def on_qml_dismissed(self):
+        print "dismessed"
+
+    def on_notificationWindowClosed(self, pos):
+        self.__notificationWindowMask[pos] = False
+        self.checkNotificationQueue()
+
+    def checkNotificationQueue(self):
+        if len(self.__notificationWaitingQueue) > 0:
+            msg = self.__notificationWaitingQueue.pop()
+            self.addNewNotification(msg)
+
     def addNewNotification(self, message):
-        pass
+        availablePos = -1
+        for idx in range(0, self.__maxNotificationWindowCount):
+            if not self.__notificationWindowMask[idx]:
+                availablePos = idx
+                break
+
+        if availablePos == -1:
+            self.__notificationWaitingQueue.append(message)
+        else:
+            self.__notificationWindowMask[availablePos] = True
+
+            windowPosX = int(self.__notificationStartX)
+            windowPosY = int(self.__notificationStartY + availablePos * NOTIFICATION_WINDOW_HEIGHT) + 20
+
+            window = QQmlApplicationEngine(QUrl('NewMessageWindow.qml'), self.__app)
+            qmlRoot = window.rootObjects()[0]
+            qmlRoot.setProperty("x", windowPosX)
+            qmlRoot.setProperty("y", windowPosY)
+            qmlRoot.setProperty("posIdx", availablePos)
+
+            # Set up signals and slots
+            qmlRoot.dismissed.connect(self.on_qml_dismissed)
+            qmlRoot.reply.connect(self.on_qml_reply)
+            qmlRoot.closed.connect(self.on_notificationWindowClosed)
+
+            QMetaObject.invokeMethod(qmlRoot, "test", Qt.AutoConnection)
+
 
 class GuiMain(object):
 
@@ -47,6 +108,10 @@ class GuiMain(object):
 
         # For test purpose
         self.testQRCode()
+        self.__notificationMan.addNewNotification("None")
+
+    def getNotificationMan(self):
+        return self.__notificationMan
 
     def setUpTrayIcon(self):
         # Prepare tray icon
@@ -103,3 +168,10 @@ class GuiMain(object):
         # Call functions to update content
         qmlRoot = window.rootObjects()[0]
         QMetaObject.invokeMethod(qmlRoot, "setQrCodeImage", Qt.AutoConnection, Q_ARG("QVariant", QVariant(encodedQrImg)))
+
+        # Move center of screen
+        frameGm = qmlRoot.frameGeometry()
+        screenId = self.__app.desktop().screenNumber(self.__app.desktop().cursor().pos())
+        windowPos = self.__app.desktop().screenGeometry(screenId).center()
+        frameGm.moveCenter(windowPos)
+        qmlRoot.setPosition(frameGm.topLeft())

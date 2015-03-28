@@ -10,8 +10,11 @@ ApplicationWindow {
     id: mainWindow
     flags: Qt.FramelessWindowHint
 
+    property int posIdx
+
     signal dismissed()
     signal reply(string text)
+    signal closed(int posId)
 
     function updateMessage(m) {
         for(var idx in m) {
@@ -152,6 +155,8 @@ ApplicationWindow {
                     id: upperBar
                     onDismissed: {
                         mainWindow.dismissed()
+                        mainWindow.closed(mainWindow.posIdx)
+                        mainWindow.close()
                     }
                 }
             }
@@ -209,6 +214,7 @@ ApplicationWindow {
 
                     onReplyMessageAccepted: {
                         mainWindow.reply(message);
+                        mainWindow.closed(mainWindow.posIdx)
                         mainWindow.close()
                     }
                 }

@@ -2,23 +2,13 @@ import QtQuick 2.2
 import QtQuick.Controls 1.1
 
 ApplicationWindow {
-    id: applicationWindow1
+    id: mainWindow
     color: "transparent"
     title: "QR Code"
     visible: true
-    width: 320
-    height: 340
-
-    menuBar: MenuBar {
-        Menu {
-            title: qsTr("File")
-            MenuItem {
-                text: qsTr("Exit")
-                onTriggered: Qt.quit();
-            }
-        }
-    }
-
+    width: 280
+    height: 290
+    flags: Qt.FramelessWindowHint
 
     BorderImage {
         id: borderImage1
@@ -88,7 +78,6 @@ ApplicationWindow {
                 id: qrImage
                 fillMode: Image.PreserveAspectFit
                 anchors.fill: parent
-                source: "qrc:/qtquickplugin/images/template_image.png"
             }
         }
     }
