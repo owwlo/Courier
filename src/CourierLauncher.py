@@ -39,7 +39,7 @@ class CommandManager(cmd.Cmd):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    service = CourierService()
+    service = CourierService(app)
     service.setDaemon(True)
     service.start()
 

@@ -44,8 +44,10 @@ class NotificationMan():
         self.__notificationEndY = screenRes.y() + screenRes.height()
         self.__maxNotificationWindowCount = int(math.floor(screenRes.height() / NOTIFICATION_WINDOW_HEIGHT))
 
+        # Set flags for notification windows.
         self.__notificationWindowMask = [False] * self.__maxNotificationWindowCount
 
+        # Pending message queue.
         self.__notificationWaitingQueue = deque()
 
     def on_qml_reply(self, replyText):
@@ -80,6 +82,8 @@ class NotificationMan():
 
             window = QQmlApplicationEngine(QUrl('NewMessageWindow.qml'), self.__app)
             qmlRoot = window.rootObjects()[0]
+            qmlRoot.setProperty("height", NOTIFICATION_WINDOW_HEIGHT)
+            qmlRoot.setProperty("width", NOTIFICATION_WINDOW_WIDTH)
             qmlRoot.setProperty("x", windowPosX)
             qmlRoot.setProperty("y", windowPosY)
             qmlRoot.setProperty("posIdx", availablePos)
@@ -103,12 +107,13 @@ class GuiMain(object):
         self.setTrayVisiable(True)
 
         service.addOnNewMessageFromDevice(self.onNewMessage)
-        service.addOnTokenFetched(self.onTokenFetched)
+        # service.addOnTokenFetched(self.onTokenFetched)
+        service.onTokenFetched.connect(self.onTokenFetched)
         service.addOnDeviceConnected(self.onDeviceConnected)
 
         # For test purpose
-        self.testQRCode()
-        self.__notificationMan.addNewNotification("None")
+        # self.testQRCode()
+        # self.__notificationMan.addNewNotification("None")
 
     def getNotificationMan(self):
         return self.__notificationMan

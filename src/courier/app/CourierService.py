@@ -4,6 +4,8 @@ Created on Jan 17, 2015
 @author: owwlo
 '''
 
+from PyQt5              import QtGui, QtCore, QtQml, QtQuick
+from PyQt5.QtCore       import QObject, QUrl, Qt, QVariant, QMetaObject, Q_ARG
 import threading
 import websocket
 import json
@@ -18,7 +20,7 @@ RECONNECT_INTERVAL = 5
 logger = logging.getLogger("CourierApp")
 coloredlogs.install(level = logging.DEBUG, show_hostname = False, show_timestamps = False)
 
-class CourierService(threading.Thread):
+class CourierService(threading.Thread, QObject):
 
     class WebSocketHandler():
 
@@ -44,8 +46,13 @@ class CourierService(threading.Thread):
             fetchThread.start()
             # fetchThread.join()
 
-    def __init__(self):
-        super(CourierService, self).__init__()
+    onTokenFetched = QtCore.pyqtSignal([str])
+
+    def __init__(self, app):
+        threading.Thread.__init__(self)
+        QObject.__init__(self, app)
+
+        self.__app = app
         self.handler = self.WebSocketHandler(self)
         self.token = None
 
@@ -120,6 +127,9 @@ class CourierService(threading.Thread):
     def onTokenResponse(self, message):
         logger.debug("Get token from server: " + message["token"])
         self.token = message["token"]
+        for fn in self.__callbacksOnTokenFetched:
+            fn(self.token)
+        self.onTokenFetched.emit(self.token)
 
     def onNewMessageFromDevice(self, message):
         for fn in self.__callbacksOnNewMessageFromDevice:
