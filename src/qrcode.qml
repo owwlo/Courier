@@ -24,7 +24,7 @@ ApplicationWindow {
         source: "Courier.Cut/back.png"
     }
 
-    Column {
+    Item {
         id: column1
         anchors.rightMargin: 0
         anchors.bottomMargin: 0
@@ -33,11 +33,10 @@ ApplicationWindow {
         clip: false
         anchors.fill: parent
 
-        Row {
+        Item {
             id: titleBarRow
             height: 40
             antialiasing: false
-            spacing: 0
             anchors.top: parent.top
             anchors.topMargin: 0
             anchors.right: parent.right
@@ -63,7 +62,7 @@ ApplicationWindow {
             }
         }
 
-        Row {
+        Item {
             id: contentRow
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 18
