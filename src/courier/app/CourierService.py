@@ -47,6 +47,7 @@ class CourierService(threading.Thread, QObject):
             # fetchThread.join()
 
     onTokenFetched = QtCore.pyqtSignal([str])
+    onNewMessage = QtCore.pyqtSignal([dict])
 
     def __init__(self, app):
         threading.Thread.__init__(self)
@@ -89,6 +90,13 @@ class CourierService(threading.Thread, QObject):
 
     def getTokenRequestPackage(self):
         return {"type": "operation", "command": "request_token"}
+
+    def getReplyRequestPackage(self, cId, replyText):
+        return {"type": "reply", "cId": str(cId), "content": replyText}
+
+    def sendReply(self, cId, replyText):
+        pkg = self.getReplyRequestPackage(cId, replyText)
+        self.sendHash(pkg)
 
     def parseMessage(self, message):
         parsed = None
@@ -134,6 +142,7 @@ class CourierService(threading.Thread, QObject):
     def onNewMessageFromDevice(self, message):
         for fn in self.__callbacksOnNewMessageFromDevice:
             fn(message)
+        self.onNewMessage.emit(message)
 
     def onDeviceConnected(self, message):
         for fn in self.__callbacksOnDeviceConnected:

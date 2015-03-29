@@ -83,6 +83,5 @@ ApplicationWindow {
 
     function setQrCodeImage(imgData) {
         qrImage.source = "data:image/png;base64," + imgData
-        return
     }
 }

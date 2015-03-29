@@ -11,35 +11,26 @@ ApplicationWindow {
     flags: Qt.FramelessWindowHint
 
     property int posIdx
+    property string conversationId
 
-    signal dismissed()
-    signal reply(string text)
+    signal dismissed(string cId)
+    signal reply(string text, string cId)
     signal closed(int posId)
 
-    function updateMessage(m) {
-        for(var idx in m) {
-            var messageMap = m[idx]
+    function updateMessage(userImages, msgs) {
+        for(var idx in msgs) {
+            var messageMap = msgs[idx];
             messageModel.append({
                                     "mIsHost": messageMap["isHost"],
                                     "mContent": messageMap["content"],
-                                    "mUserImage":messageMap["userImage"]
+                                    "mUserImage": userImages[messageMap["userId"]]
                                 });
         }
     }
 
-    function test() {
-        var messages = [
-                {
-                    "content": "The actual parameter (or argument expression) is fully evaluated and the resulting value is copied into a location being used to hold the formal parameter's value during method/function execution.",
-                    "isHost": true,
-                    "userImage": "iVBORw0KGgoAAAANSUhEUgAAAmwAAAJsAQAAAABo7sKIAAADMklEQVR4nO3dQXLjIBCF4ddT3qMb+P7H8g3gBD0LgUAIpyqMK0PsvxexLImv0qsuhGib64WR/rxSk+Dg4ODgVuDkHp+dC+5S8CbyVXd/MmztZOHg4ODg/oFr60GUcoV4mLk/zPKtyUwK7mZbPnMZ9iuShYODg4P7ZtzyZ9r2z/aRVHCZJJlClB2nXcnKff2wtZOFg4ODg3sll8ykZOYepTq5aB9O/cf/Dg4ODg7uR7nb0yvWzCsk+T6HSJu+Wg1fO1k4ODg4uKkotSIMKkCyUiGUS0c5inoybO1k4eDg4OCmYq8VNrjizWJE2ppVinp0HbZ2snBwcHBwU3EbTylKtNUgeHkuFVxPhq2dLBwcHBzcXOTV6/Lea903kTdUdOvYYbC1ItSxaycLBwcHBzcXlzJRq8F1L163oeJSXagVcHBwcO/INdOHy5Sii9CWiXrfqXSsnSwcHBwc3CyXrFmVaFt5xPODqGQltgG0P6taPlk4ODg4uFnO/ZFrQFsNgruZHdvwuvlHWcg4lY7fkCwcHBwc3HejW9u+LFDEwX2nCydq7WTh4ODg4Ga57k2n8kgqTzPuuTTkc3Z+YBW7trPLJwsHBwcHNxHt0rS3L8mOphSjt6R4ZxYODg7u3bmyb7vsrHMlk9ouHrFpClVvbtvONsDaycLBwcHBTcVNbcenqNF+bB98zTUlWTm39/1YO1k4ODg4uLmoi9X5a5S6bXj5ztOid72Z/RVwcHBw784N1yvGpUP56FQc2qvUCjg4OLj35K6dPXTMF8qFtn6Ey4bu06L32snCwcHBwc2FDyOOJg2DYbF7X2rtZOHg4ODgZrnau6OEpGM/djLrFi3yUd2HcWd/BRwcHNwHcN2U4rKOncxqU6jRj26b3ekHBQcHB/eu3KCv+PlPN6V4ul4hnkHBwcHBfRhX6oKZ5WdQuZyc5hXufrQXDMwr4ODg4D6Uc49HZ6jt+HpvJxe1iPz4fwcHBwcH9yPcLX+Ofj07bfKm+YeOVh5lt7btHUCalh9rJwsHBwcHNxWlH1QXaZP2GrBXg3gdmezo7CGVDlJrJwsHBwcHNxU2mE/MR1o7WTg4ODi4qfgLVLrSc9IR/boAAAAASUVORK5CYII="
-                },{
-                    "content": "I finally decided to write up a little something about Java's parameter passing. I'm really tired of hearing folks (incorrectly) state primitives are passed by value, objects are passed by reference",
-                    "isHost": false,
-                    "userImage": "iVBORw0KGgoAAAANSUhEUgAAAmwAAAJsAQAAAABo7sKIAAADMklEQVR4nO3dQXLjIBCF4ddT3qMb+P7H8g3gBD0LgUAIpyqMK0PsvxexLImv0qsuhGib64WR/rxSk+Dg4ODgVuDkHp+dC+5S8CbyVXd/MmztZOHg4ODg/oFr60GUcoV4mLk/zPKtyUwK7mZbPnMZ9iuShYODg4P7ZtzyZ9r2z/aRVHCZJJlClB2nXcnKff2wtZOFg4ODg3sll8ykZOYepTq5aB9O/cf/Dg4ODg7uR7nb0yvWzCsk+T6HSJu+Wg1fO1k4ODg4uKkotSIMKkCyUiGUS0c5inoybO1k4eDg4OCmYq8VNrjizWJE2ppVinp0HbZ2snBwcHBwU3EbTylKtNUgeHkuFVxPhq2dLBwcHBzcXOTV6/Lea903kTdUdOvYYbC1ItSxaycLBwcHBzcXlzJRq8F1L163oeJSXagVcHBwcO/INdOHy5Sii9CWiXrfqXSsnSwcHBwc3CyXrFmVaFt5xPODqGQltgG0P6taPlk4ODg4uFnO/ZFrQFsNgruZHdvwuvlHWcg4lY7fkCwcHBwc3HejW9u+LFDEwX2nCydq7WTh4ODg4Ga57k2n8kgqTzPuuTTkc3Z+YBW7trPLJwsHBwcHNxHt0rS3L8mOphSjt6R4ZxYODg7u3bmyb7vsrHMlk9ouHrFpClVvbtvONsDaycLBwcHBTcVNbcenqNF+bB98zTUlWTm39/1YO1k4ODg4uLmoi9X5a5S6bXj5ztOid72Z/RVwcHBw784N1yvGpUP56FQc2qvUCjg4OLj35K6dPXTMF8qFtn6Ey4bu06L32snCwcHBwc2FDyOOJg2DYbF7X2rtZOHg4ODgZrnau6OEpGM/djLrFi3yUd2HcWd/BRwcHNwHcN2U4rKOncxqU6jRj26b3ekHBQcHB/eu3KCv+PlPN6V4ul4hnkHBwcHBfRhX6oKZ5WdQuZyc5hXufrQXDMwr4ODg4D6Uc49HZ6jt+HpvJxe1iPz4fwcHBwcH9yPcLX+Ofj07bfKm+YeOVh5lt7btHUCalh9rJwsHBwcHNxWlH1QXaZP2GrBXg3gdmezo7CGVDlJrJwsHBwcHNxU2mE/MR1o7WTg4ODi4qfgLVLrSc9IR/boAAAAASUVORK5CYII="
-                }
-            ];
-        updateMessage(messages);
+    function setConfig(msg) {
+        mainWindow.conversationId = msg["conversationId"];
+        updateMessage(msg["userImages"], msg["messages"]);
     }
 
     ListModel {
@@ -154,7 +145,7 @@ ApplicationWindow {
                 UpperBar {
                     id: upperBar
                     onDismissed: {
-                        mainWindow.dismissed()
+                        mainWindow.dismissed(mainWindow.conversationId)
                         mainWindow.closed(mainWindow.posIdx)
                         mainWindow.close()
                     }
@@ -213,7 +204,7 @@ ApplicationWindow {
                     anchors.bottom: parent.bottom
 
                     onReplyMessageAccepted: {
-                        mainWindow.reply(message);
+                        mainWindow.reply(message, mainWindow.conversationId);
                         mainWindow.closed(mainWindow.posIdx)
                         mainWindow.close()
                     }

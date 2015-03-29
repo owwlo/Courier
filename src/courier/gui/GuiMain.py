@@ -50,10 +50,10 @@ class NotificationMan():
         # Pending message queue.
         self.__notificationWaitingQueue = deque()
 
-    def on_qml_reply(self, replyText):
-        print replyText    
+    def on_qml_reply(self, replyText, cId):
+        self.__service.sendReply(cId, replyText)
 
-    def on_qml_dismissed(self):
+    def on_qml_dismissed(self, cId):
         print "dismessed"
 
     def on_notificationWindowClosed(self, pos):
@@ -93,8 +93,7 @@ class NotificationMan():
             qmlRoot.reply.connect(self.on_qml_reply)
             qmlRoot.closed.connect(self.on_notificationWindowClosed)
 
-            QMetaObject.invokeMethod(qmlRoot, "test", Qt.AutoConnection)
-
+            QMetaObject.invokeMethod(qmlRoot, "setConfig", Qt.AutoConnection, Q_ARG("QVariant", QVariant(message)))
 
 class GuiMain(object):
 
@@ -103,11 +102,13 @@ class GuiMain(object):
         self.__app = app
         self.__notificationMan = NotificationMan(service, app, self)
 
+        self.__qrcodeWindow = None
+
         self.setUpTrayIcon()
         self.setTrayVisiable(True)
 
-        service.addOnNewMessageFromDevice(self.onNewMessage)
-        # service.addOnTokenFetched(self.onTokenFetched)
+        # Use signals/slots instead of listeners here cause Service is running on another thread.
+        service.onNewMessage.connect(self.onNewMessage)
         service.onTokenFetched.connect(self.onTokenFetched)
         service.addOnDeviceConnected(self.onDeviceConnected)
 
@@ -143,6 +144,7 @@ class GuiMain(object):
         for msg in messages:
             logger.info("Msg %d, recv_time: %s, sender: %s, content: %s" % (idx, msg["recv_time"], msg["sender"], msg["content"]))
             idx += 1
+        self.__notificationMan.addNewNotification(message)
 
     def onTokenFetched(self, token):
         logger.debug("New token fetched from server: " + str(token))
@@ -150,6 +152,9 @@ class GuiMain(object):
 
     def onDeviceConnected(self, message):
         logger.debug("New Device Connected.")
+        if self.__qrcodeWindow is not None:
+            QMetaObject.invokeMethod(self.__qrcodeWindow, "close", Qt.AutoConnection)
+            self.__qrcodeWindow = None
 
     def testQRCode(self):
         self.showQRCode("test purpose fake token string")
@@ -172,6 +177,7 @@ class GuiMain(object):
 
         # Call functions to update content
         qmlRoot = window.rootObjects()[0]
+        self.__qrcodeWindow = qmlRoot
         QMetaObject.invokeMethod(qmlRoot, "setQrCodeImage", Qt.AutoConnection, Q_ARG("QVariant", QVariant(encodedQrImg)))
 
         # Move center of screen
